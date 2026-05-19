@@ -65,7 +65,7 @@ export class CpTooltip extends UtBase {
         clearTimeout(this._timeout);
         this._timeout = setTimeout(() => {
             this.open = true;
-        }, 300); // delay stile MUI
+        }, 100); // delay stile MUI
     }
 
     _hide() {

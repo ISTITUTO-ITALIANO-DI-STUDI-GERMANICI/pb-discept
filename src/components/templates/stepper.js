@@ -31,7 +31,6 @@ export class CpStepper extends UtBase {
 
     .stepper {
       position: relative;
-      width: min(700px, 100%);
       margin: 0 auto;
     }
 

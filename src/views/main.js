@@ -1,8 +1,8 @@
 import { html } from 'lit';
-import { UtBase } from "../../../utilities/base.js";
-import { CpStepper } from '../../templates/stepper.js';
+import { UtBase } from "../utilities/base.js";
+import { CpStepper } from '../components/templates/stepper.js';
 
-export class CpMain extends UtBase {
+export class VwMain extends UtBase {
 
     constructor() {
         super();
@@ -29,10 +29,6 @@ export class CpMain extends UtBase {
             {
                 label: 'Images',
                 description: 'Add image resources to your TEI documents.'
-            },
-            {
-                label: 'IIIF object and annotations',
-                description: 'Link a IIIF object with all its annotations.'
             },
             {
                 label: 'Final steps',
@@ -74,10 +70,6 @@ export class CpMain extends UtBase {
             </div>
 
             <div slot="step-5">
-                IIIF object and annotations
-            </div>
-
-            <div slot="step-6">
                 Final steps
             </div>
 
@@ -86,4 +78,4 @@ export class CpMain extends UtBase {
     }
 }
 
-customElements.define('cp-main', CpMain);
+customElements.define('vw-main', VwMain);

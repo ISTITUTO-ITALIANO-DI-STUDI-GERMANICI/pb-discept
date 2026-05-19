@@ -3,7 +3,7 @@ import { UtBase } from "./utilities/base.js";
 
 import "./components/main/header.js";
 import "./components/main/footer.js";
-import "./components/main/steps/main.js";
+import "./views/main.js";
 
 
 export class PbDiscept extends UtBase {
@@ -33,7 +33,7 @@ export class PbDiscept extends UtBase {
   render() {
     return html`
       <cp-header></cp-header>
-      <cp-main></cp-main>
+      <vw-main></vw-main>
       <cp-footer></cp-footer>
     `;
   }
