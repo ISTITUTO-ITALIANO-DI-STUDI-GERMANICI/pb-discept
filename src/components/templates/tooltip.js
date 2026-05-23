@@ -40,7 +40,7 @@ export class CpTooltip extends UtBase {
             z-index: 100;
             text-align: center;
             line-height: 1.2;
-            max-width: 160px;
+            max-width: var(--cp-tooltip-max-width, 160px);
             width: max-content;
         }
 

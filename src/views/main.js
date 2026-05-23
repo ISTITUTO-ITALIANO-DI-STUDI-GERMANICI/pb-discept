@@ -2,6 +2,8 @@ import { html } from 'lit';
 import { UtBase } from "../utilities/base.js";
 import { CpStepper } from '../components/templates/stepper.js';
 
+import { VwIntro } from './steps/Intro.js';
+
 export class VwMain extends UtBase {
 
     constructor() {
@@ -9,30 +11,37 @@ export class VwMain extends UtBase {
 
         this.activeStep = 0;
 
+        // We will centralize for a multilanguage component
         this.steps = [
             {
                 label: 'Intro',
-                description: 'Project description'
+                description: 'Project description',
+                render: () => html`<vw-intro></vw-intro>`
             },
             {
                 label: 'Project description',
-                description: 'Describe your project, the team members, the authors, etc.'
+                description: 'Describe your project, the team members, the authors, etc.',
+                render: () => html`Project description`
             },
             {
                 label: 'TEI and translations',
-                description: 'Create or upload your TEI documents and define the translation sources.'
+                description: 'Create or upload your TEI documents and define the translation sources.',
+                render: () => html`TEI and translations`
             },
             {
                 label: 'Alignments',
-                description: 'Align your TEI documents.'
+                description: 'Align your TEI documents.',
+                render: () => html`Alignments`
             },
             {
                 label: 'Images',
-                description: 'Add image resources to your TEI documents.'
+                description: 'Add image resources to your TEI documents.',
+                render: () => html`Images`
             },
             {
                 label: 'Final steps',
-                description: 'Create your digital edition.'
+                description: 'Create your digital edition.',
+                render: () => html`Final steps`
             },
         ];
     }
@@ -49,29 +58,11 @@ export class VwMain extends UtBase {
             @step-change=${this._onStepChange}
             >
 
-            <div slot="step-0">
-                Intro
-            </div>
-
-            <div slot="step-1">
-                Metadata
-            </div>
-
-            <div slot="step-2">
-                TEI and translations
-            </div>
-
-            <div slot="step-3">
-                Alignments
-            </div>
-
-            <div slot="step-4">
-                Images
-            </div>
-
-            <div slot="step-5">
-                Final steps
-            </div>
+            ${this.steps.map((step, i) => html`
+                <div slot="step-${i}">
+                ${step.render()}
+                </div>
+            `)}
 
             </cp-stepper>
         `;
