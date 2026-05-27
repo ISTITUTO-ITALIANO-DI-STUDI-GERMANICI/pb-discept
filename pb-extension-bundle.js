@@ -7,6 +7,8 @@ import './src/components/main/header.js';
 import './src/components/main/headerMenu.js';
 import './src/components/main/footer.js';
 
+import './src/components/main/options/eXistdbSync.js';
+
 import './src/components/templates/stepper.js';
 import './src/components/templates/tooltip.js';
 

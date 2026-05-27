@@ -2,6 +2,8 @@ import { UtBase } from "../../utilities/base";
 import "../../components/templates/tooltip.js";
 import { html, css } from "lit";
 
+import { CpExistdbSync } from "./options/eXistdbSync.js";
+
 export class CpHeaderMenu extends UtBase {
 
     static properties = {
@@ -218,6 +220,15 @@ export class CpHeaderMenu extends UtBase {
         this.open = !this.open;
     }
 
+    handleAction(action) {
+
+        if (action.label === "Sync eXist-db") {
+            const modal = this.renderRoot?.querySelector("#existSync");
+            modal?.openDialog();
+            this.open = false;
+        }
+    }
+
     renderAction(a, mobile = false) {
         const content = html`
             ${this.renderIcon(a)}
@@ -229,18 +240,21 @@ export class CpHeaderMenu extends UtBase {
                 <div class="mobile-item">
                     <md-text-button
                         aria-label=${a.label}
-                        @click=${() => this.open = false}
+                        @click=${() => this.handleAction(a)}
                     >
                         ${content}
                     </md-text-button>
                 </div>
             `;
         }
-
+        
         return html`
             <cp-tooltip text=${a.label}>
-                <md-text-button aria-label=${a.label}>
-                    ${this.renderIcon(a)}
+                <md-text-button
+                    aria-label=${a.label}
+                    @click=${() => this.handleAction(a)}
+                >
+                    ${content}
                 </md-text-button>
             </cp-tooltip>
         `;
@@ -264,6 +278,8 @@ export class CpHeaderMenu extends UtBase {
                 <div class="mobile-menu ${this.open ? 'open' : ''}">
                     ${this.actions.map(a => this.renderAction(a, true))}
                 </div>
+
+                <cp-existdb-sync id="existSync"></cp-existdb-sync>
 
             </div>
         `;

@@ -15,10 +15,16 @@
   "license": "GPL-3.0-or-later",
   "repository": "https://github.com/Kalo9603/pb-discept/tree/test",
   "dependencies": {
+    "@koa/cors": "^5.0.0",
+    "@koa/router": "^15.5.0",
     "@material/web": "^2.4.1",
     "@teipublisher/pb-components": "latest",
     "dompurify": "^3.4.1",
     "fuse.js": "^7.1.0",
+    "koa-bodyparser": "^4.4.1",
+    "lit": "^3.3.3",
+    "monaco-editor": "^0.55.1",
+    "node-fetch": "^3.3.2",
     "tailwind-colors-vars": "^1.0.1"
   },
   "devDependencies": {
