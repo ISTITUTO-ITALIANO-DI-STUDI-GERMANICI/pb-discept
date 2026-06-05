@@ -5,7 +5,7 @@ const cors = require('@koa/cors');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 const TARGET = process.env.EXIST_PROXY_TARGET || 'http://localhost:8080';
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3001;
 
 const app = new Koa();
 app.use(cors());

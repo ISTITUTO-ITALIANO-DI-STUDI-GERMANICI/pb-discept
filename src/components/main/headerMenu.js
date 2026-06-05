@@ -1,9 +1,21 @@
+/*  The above menu placed upper left inside header component.
+    The main features are:
+    - Uploading TEI/XML files with validation and feedback.
+    - Syncing with eXist-db via a modal dialog.
+    - Autosave on localStorage and restore the current save.
+    - Help section linking to documentation and support.
+    - Settings for user preferences and application configuration.
+    - Responsive design with a hamburger menu on smaller screens.
+    - Tooltips for desktop actions and labeled buttons for mobile.
+*/
+
 import { UtBase } from "../../utilities/base";
 import "../../components/templates/tooltip.js";
 import { html, css } from "lit";
-
+import { CONFIG } from "../../utilities/config.js";
+import { ALERT } from "../../utilities/alert/alerts.js";
+import { CpButton } from "../../components/templates/button.js";
 import { CpExistdbSync } from "./options/eXistdbSync.js";
-
 export class CpHeaderMenu extends UtBase {
 
     static properties = {
@@ -49,14 +61,6 @@ export class CpHeaderMenu extends UtBase {
         }
     }
 
-    renderIcon({ icon, fill }) {
-        return html`
-            <span class="material-symbols-outlined ${fill ? 'fill' : ''}">
-                ${icon}
-            </span>
-        `;
-    }
-
     static styles = css`
 
         :host {
@@ -72,42 +76,6 @@ export class CpHeaderMenu extends UtBase {
             display: flex;
             gap: 8px;
             align-items: center;
-        }
-
-        .btn-content {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        md-icon {
-            font-size: 20px;
-            display: inline-flex;
-            vertical-align: middle;
-        }
-
-        .label {
-            font-size: 14px;
-            line-height: 1;
-        }
-
-        md-text-button {
-            min-width: auto;
-            padding: 6px 12px;
-
-            transition:
-                background-color 160ms ease,
-                transform 160ms ease,
-                box-shadow 160ms ease;
-        }
-
-        md-text-button:hover {
-            background-color: rgba(0, 0, 0, 0.06);
-            transform: translateY(-1px);
-        }
-
-        md-text-button:active {
-            transform: translateY(0px) scale(0.98);
         }
 
         .hamburger {
@@ -152,40 +120,8 @@ export class CpHeaderMenu extends UtBase {
             width: 100%;
         }
 
-        .mobile-item md-text-button {
+        .mobile-item cp-button {
             width: 100%;
-            justify-content: flex-start;
-        }
-
-        .mobile-item .btn-content {
-            display: inline-flex;
-            align-items: center;
-            margin-right: 8px;
-        }
-
-        .material-symbols-outlined,
-        .material-symbols-rounded,
-        .material-symbols-sharp {
-            font-family: 'Material Symbols Outlined';
-            font-variation-settings:
-                'FILL' 0,
-                'wght' 400,
-                'GRAD' 0,
-                'opsz' 24;
-
-            font-size: 20px;
-            line-height: 1;
-            display: inline-flex;
-            vertical-align: middle;
-            transition: transform 160ms ease, color 160ms ease;
-        }
-
-        .fill {
-            font-variation-settings:
-                'FILL' 1,
-                'wght' 400,
-                'GRAD' 0,
-                'opsz' 24;
         }
 
         @media (max-width: 768px) {
@@ -214,10 +150,57 @@ export class CpHeaderMenu extends UtBase {
 
         this._mq = window.matchMedia('(max-width: 768px)');
         this._handleMediaChange = this._handleMediaChange.bind(this);
+
+        this.uploadedFile = null;
+        this.languages = [];
+
     }
 
     toggleMenu() {
         this.open = !this.open;
+    }
+
+    _handleFileUpload(e) {
+        const file = e.target.files?.[0];
+
+        if (!file) return;
+
+        const isValid =
+            file.name.endsWith(".xml") ||
+            file.name.endsWith(".tei") ||
+            file.type.includes("xml");
+
+        if (!isValid) {
+            this.alert("ERROR", ALERT.ERROR.DOCUMENT.UPLOAD(file.name));
+            e.target.value = "";
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = (event) => {
+
+            const content = event.target?.result;
+            this.uploadedFile = content;
+            this.languages = this._extractLanguages(content);
+            this.alert("SUCCESS", ALERT.SUCCESS.DOCUMENT.UPLOADED(file.name));
+            this.requestUpdate();
+
+            window.dispatchEvent(new CustomEvent("tei-loaded", {
+                detail: {
+                    xml: content,
+                    languages: this.languages
+                }
+            }));
+
+        };
+
+        reader.onerror = () => {
+            this.alert("ERROR", ALERT.ERROR.DOCUMENT.UPLOAD(file.name));
+        };
+
+        reader.readAsText(file);
+
     }
 
     handleAction(action) {
@@ -227,41 +210,65 @@ export class CpHeaderMenu extends UtBase {
             modal?.openDialog();
             this.open = false;
         }
+
+        if (action.label === "Upload file") {
+            const input = this.renderRoot?.querySelector('input[type="file"]');
+            input?.click();
+            this.open = false;
+            return;
+        }
+
+    }
+
+    firstUpdated() {
+        this.addEventListener("click", (e) => {
+            if (this.disabled) {
+                e.stopPropagation();
+                e.preventDefault();
+            }
+        });
     }
 
     renderAction(a, mobile = false) {
-        const content = html`
-            ${this.renderIcon(a)}
-            ${mobile ? a.label : ""}
-        `;
-
-        if (mobile) {
-            return html`
-                <div class="mobile-item">
-                    <md-text-button
-                        aria-label=${a.label}
-                        @click=${() => this.handleAction(a)}
-                    >
-                        ${content}
-                    </md-text-button>
-                </div>
-            `;
-        }
-        
+        // Pass icon and label as properties — cp-button handles rendering internally.
+        // In mobile mode show the label; on desktop the tooltip suffices.
         return html`
-            <cp-tooltip text=${a.label}>
-                <md-text-button
-                    aria-label=${a.label}
-                    @click=${() => this.handleAction(a)}
-                >
-                    ${content}
-                </md-text-button>
-            </cp-tooltip>
+            <cp-button
+                icon=${a.icon}
+                label=${mobile ? a.label : ""}
+                tooltip=${a.label}
+                @click=${() => this.handleAction(a)}
+            ></cp-button>
         `;
+    }
+
+    _extractLanguages(xmlString) {
+
+        if (!xmlString) return [];
+
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(xmlString, "application/xml");
+
+        const nodes = [...xml.querySelectorAll("language[ident]")];
+
+        const languages = nodes
+            .map(n => n.getAttribute("ident"))
+            .filter(Boolean);
+
+        if (languages.length === 0) return ["und"];
+
+        return [...new Set(languages)];
     }
 
     render() {
         return html`
+
+            <input
+                type="file"
+                accept=".xml,.tei,text/xml,application/xml"
+                style="display:none"
+                @change=${this._handleFileUpload}
+            />
 
             <div class="header-menu">
 
@@ -271,12 +278,19 @@ export class CpHeaderMenu extends UtBase {
                     </div>
                 `)}
 
-                <md-text-button class="hamburger" @click=${this.toggleMenu}>
-                    ${this.renderIcon({ icon: "menu", fill: false })}
-                </md-text-button>
+                <cp-button
+                    class="hamburger"
+                    icon="menu"
+                    tooltip="Menu"
+                    @click=${this.toggleMenu}
+                ></cp-button>
 
                 <div class="mobile-menu ${this.open ? 'open' : ''}">
-                    ${this.actions.map(a => this.renderAction(a, true))}
+                    ${this.actions.map(a => html`
+                        <div class="mobile-item">
+                            ${this.renderAction(a, true)}
+                        </div>
+                    `)}
                 </div>
 
                 <cp-existdb-sync id="existSync"></cp-existdb-sync>

@@ -1,10 +1,19 @@
+// This template implements a stepper component that guides users through a multi-step process.
+// It displays the current step, allows navigation between steps, and shows progress.
+//
+// KEY DESIGN DECISION — always-mounted slots:
+// All step slots are rendered into the DOM at all times (visibility toggled via
+// CSS display:none). This means child components like VwTranslations are
+// connectedCallback'd once and stay alive, so they can receive window events
+// (e.g. "tei-loaded") even when their step is not the active one.
+// Without this, a TEI file uploaded while on step 0 would fire "tei-loaded"
+// before VwTranslations is mounted on step 2, and the event would be lost.
+
 import { html, css } from 'lit';
 import { UtBase } from '../../utilities/base.js';
 
-import '@material/web/button/filled-button.js';
-import '@material/web/button/text-button.js';
-
 import './tooltip.js';
+import './button.js';
 
 export class CpStepper extends UtBase {
 
@@ -14,11 +23,8 @@ export class CpStepper extends UtBase {
   };
 
   constructor() {
-
     super();
-
     this.steps = [];
-
     this.activeStep = 0;
   }
 
@@ -123,6 +129,15 @@ export class CpStepper extends UtBase {
       border-radius: 12px;
     }
 
+    /* Each step panel is always in the DOM; only the active one is visible. */
+    .step-panel {
+      display: none;
+    }
+
+    .step-panel.active {
+      display: block;
+    }
+
     .actions {
       display: flex;
       justify-content: space-between;
@@ -184,52 +199,35 @@ export class CpStepper extends UtBase {
       </div>
 
       <!-- STEPS -->
-
       <div class="steps">
-
         ${this.steps.map((step, i) => html`
-
           <div
             class="step-node ${this._stateClass(i)}"
             @click=${() => this._goToStep(i)}
           >
-
             <cp-tooltip .text=${step.description || ''}>
-
               <div class="circle" tabindex="0">
                 ${i < this.activeStep ? '✓' : i + 1}
               </div>
-
             </cp-tooltip>
-
             <div class="label">
               ${step.label}
               ${step.optional ? html`<span>(optional)</span>` : ''}
             </div>
-
           </div>
-
         `)}
-
       </div>
 
-      <!-- CONTENT -->
+      <!-- CONTENT
+           All panels are always mounted so child components receive window
+           events regardless of which step is currently active. Only the
+           active panel is made visible via the .active CSS class. -->
       <div class="content">
-        <slot name="step-${this.activeStep}"></slot>
-      </div>
-
-      <!-- ACTIONS -->
-      <div class="actions">
-        <md-text-button
-          ?disabled=${this.activeStep === 0}
-          @click=${this._back}
-        >
-          Back
-        </md-text-button>
-
-        <md-filled-button @click=${this._next}>
-          ${this.activeStep === this.steps.length - 1 ? 'Finish' : 'Next'}
-        </md-filled-button>
+        ${this.steps.map((_, i) => html`
+          <div class="step-panel ${i === this.activeStep ? 'active' : ''}">
+            <slot name="step-${i}"></slot>
+          </div>
+        `)}
       </div>
 
     </div>

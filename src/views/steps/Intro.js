@@ -1,3 +1,6 @@
+// This view serves as the introductory step in the application, providing users
+// with an overview of the DiScEPT platform and its objectives.
+
 import { html, css } from 'lit';
 import { UtBase } from "../../utilities/base.js";
 import { CpTooltip } from '../../components/templates/tooltip.js';

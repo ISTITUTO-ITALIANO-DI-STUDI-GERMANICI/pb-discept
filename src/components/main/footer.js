@@ -1,3 +1,5 @@
+// The footer component placed below.
+
 import { html, css } from 'lit';
 import { UtBase } from "../../utilities/base.js";
 

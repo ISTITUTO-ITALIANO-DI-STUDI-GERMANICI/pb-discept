@@ -1,8 +1,16 @@
+// This view serves as the main entry point for the application, managing the overall flow and state of the user interface.
+// It uses a stepper component to guide users through the different stages of the project setup and management process,
+// including project description, TEI document handling, alignments, image resources, and finalization steps. 
+// The view maintains the active step state and renders the appropriate content for each step.
+
 import { html } from 'lit';
 import { UtBase } from "../utilities/base.js";
 import { CpStepper } from '../components/templates/stepper.js';
 
 import { VwIntro } from './steps/Intro.js';
+import { VwTranslations } from './steps/Translations.js';
+
+import { ALERT } from "../utilities/alert/alerts.js";
 
 export class VwMain extends UtBase {
 
@@ -26,7 +34,7 @@ export class VwMain extends UtBase {
             {
                 label: 'TEI and translations',
                 description: 'Create or upload your TEI documents and define the translation sources.',
-                render: () => html`TEI and translations`
+                render: () => html`<vw-translations></vw-translations>`
             },
             {
                 label: 'Alignments',

@@ -1,3 +1,6 @@
+// This module provides utility functions to interact with an eXist-db database, including authentication header generation,
+// It has been provided from the main web app.
+
 export function authHeader(user, password) {
   if (!user && !password) return {};
   const encoded = btoa(`${user}:${password}`);

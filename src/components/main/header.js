@@ -1,3 +1,5 @@
+// The header component placed above.
+
 import { html, css } from 'lit';
 import { UtBase } from "../../utilities/base.js";
 import { CpHeaderMenu } from "./headerMenu.js";

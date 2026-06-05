@@ -1,3 +1,8 @@
+// This mixin implements the core channel/event mechanism used by components in TEI Publisher
+// to communicate. It allows components to emit events into named channels and subscribe to events from specific channels,
+// enabling targeted communication between components in a complex page with multiple views.
+// This is directly from TEI Publisher beacuse of integration problems of this library.
+
 if (!window.TeiPublisher) {
   window.TeiPublisher = {};
 

@@ -1,3 +1,6 @@
+// This module defines the ExistDBClient class, which provides methods to interact with an eXist-db database.
+// It includes methods to list collections, fetch files, and write files to the database using the provided configuration.
+
 import { listCollection, fetchFile, writeFile } from "./existdb.js";
 
 export class ExistDBClient {

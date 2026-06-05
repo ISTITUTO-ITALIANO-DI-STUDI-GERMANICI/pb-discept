@@ -1,3 +1,6 @@
+// This template implements a tooltip component that can be used to display additional
+// information when hovering over an element.
+
 import { html, css } from 'lit';
 import { UtBase } from '../../utilities/base.js';
 

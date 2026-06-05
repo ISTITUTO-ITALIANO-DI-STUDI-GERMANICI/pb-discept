@@ -1,14 +1,22 @@
+// Helps connecting to an eXist-db instance.
+// This loads XML data from the database giving credentials and a proxy eventually.
+
 import { html, css } from "lit";
 import { UtBase } from "../../../utilities/base.js";
 import { ExistDBClient } from "../../../utilities/connection/existdb-client.js";
+import { ALERT } from "../../../utilities/alert/alerts.js";
+import { CONFIG } from "../../../utilities/config.js";
+
 import "../../../utilities/connection/existdb.js";
 
 import "@material/web/dialog/dialog.js";
 import "@material/web/textfield/outlined-text-field.js";
-import "@material/web/button/text-button.js";
-import "@material/web/button/filled-button.js";
+import "../../../components/templates/button.js";
+
+const cfg = CONFIG.EXISTDB.DEFAULT;
 
 export class CpExistdbSync extends UtBase {
+
   static properties = {
     open: { type: Boolean },
     baseUrl: { state: true },
@@ -25,11 +33,11 @@ export class CpExistdbSync extends UtBase {
     this.open = false;
     this.storageKey = "existdb-config";
     this.defaults = {
-      baseUrl: "https://existdb2.websoupcloud.it/exist",
-      collection: "/db/apps/discept-sync/data/alignments",
-      user: "tei",
-      password: "",
-      proxyUrl: "",
+      baseUrl: cfg.URL,
+      collection: cfg.COLLECTION,
+      user: cfg.USER,
+      password: cfg.PASSWORD,
+      proxyUrl: cfg.PROXY,
     };
 
     this.baseUrl = this.defaults.baseUrl;
@@ -94,8 +102,7 @@ export class CpExistdbSync extends UtBase {
       border-top: 1px solid #eee;
     }
 
-    md-filled-button,
-    md-text-button {
+    cp-button {
       font-weight: 600;
       letter-spacing: 0.08em;
       font-size: 0.78rem;
@@ -111,8 +118,7 @@ export class CpExistdbSync extends UtBase {
         flex-wrap: wrap;
       }
 
-      md-filled-button,
-      md-text-button {
+      .actions cp-button {
         flex: 1;
       }
     }
@@ -126,6 +132,11 @@ export class CpExistdbSync extends UtBase {
     this.open = false;
   }
 
+  /**
+   * Fetch the first XML file from eXist-db and broadcast it via the
+   * "tei-loaded" custom event so that VwTranslations (and any other listener)
+   * can pick it up — exactly the same contract as the local file-upload path.
+   */
   async loadConfig() {
     try {
       const client = new ExistDBClient({
@@ -136,28 +147,26 @@ export class CpExistdbSync extends UtBase {
         proxyUrl: this.proxyUrl.trim(),
       });
 
-      console.log("Listing files...");
-
       const files = await client.list();
 
-      console.log("Files:", files);
-
       if (!files.length) {
-        console.warn("No files found in collection");
+        this.alert("error", ALERT.ERROR.SYNC.EMPTY);
         return;
       }
 
       const firstFile = files[0];
-
-      console.log("Fetching file:", firstFile);
-
       const xml = await client.get(firstFile);
 
-      console.log("RAW XML CONTENT:");
-      console.log(xml);
+      window.dispatchEvent(new CustomEvent("tei-loaded", {
+        detail: { xml, source: "existdb", filename: firstFile }
+      }));
+
+      this.alert("success", ALERT.SUCCESS.SYNC.LOADED);
+      this.closeDialog();
 
     } catch (err) {
       console.error("Load failed:", err);
+      this.alert("error", ALERT.ERROR.SYNC.FAILED);
     }
   }
 
@@ -175,6 +184,7 @@ export class CpExistdbSync extends UtBase {
     if (!valid) return;
 
     localStorage.setItem(this.storageKey, JSON.stringify(payload));
+    this.alert("success", ALERT.SUCCESS.SETTINGS.SAVED);
     this.closeDialog();
   }
 
@@ -192,6 +202,7 @@ export class CpExistdbSync extends UtBase {
 
   async testConnection() {
     this.connectionStatus = "testing";
+    this.alert("info", ALERT.INFO.CONNECTION.CONNECTING);
 
     try {
       const client = new ExistDBClient({
@@ -205,9 +216,11 @@ export class CpExistdbSync extends UtBase {
       await client.list();
 
       this.connectionStatus = "ok";
+      this.alert("success", ALERT.SUCCESS.CONNECTION.EXISTDB);
     } catch (e) {
       console.error(e);
       this.connectionStatus = "error";
+      this.alert("error", ALERT.ERROR.CONNECTION.EXISTDB);
     }
   }
 
@@ -265,10 +278,10 @@ export class CpExistdbSync extends UtBase {
         </div>
 
         <div slot="actions" class="actions">
-          <md-text-button @click=${this.testConnection}>Test</md-text-button>
-          <md-text-button @click=${this.closeDialog}>Cancel</md-text-button>
-          <md-text-button @click=${this.loadConfig}>Load</md-text-button>
-          <md-filled-button @click=${this.saveConfig}>Save</md-filled-button>
+          <cp-button label="Test"   @click=${this.testConnection}></cp-button>
+          <cp-button label="Cancel" @click=${this.closeDialog}></cp-button>
+          <cp-button label="Load"   @click=${this.loadConfig}></cp-button>
+          <cp-button label="Save"   variant="filled" @click=${this.saveConfig}></cp-button>
         </div>
 
       </md-dialog>
@@ -277,4 +290,3 @@ export class CpExistdbSync extends UtBase {
 }
 
 customElements.define("cp-existdb-sync", CpExistdbSync);
-
