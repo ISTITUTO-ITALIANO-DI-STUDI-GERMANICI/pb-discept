@@ -1,4 +1,5 @@
 import { html, css } from 'lit';
+import { repeat } from 'lit/directives/repeat.js';
 import { UtBase } from "../../utilities/base.js";
 import { CountryFlag } from "../../utilities/lib/countryFlag.js";
 import { CpButton } from "../../components/templates/button.js"
@@ -24,6 +25,9 @@ export class VwTranslations extends UtBase {
         editorValue:    { state: true },
         _newLang:       { state: true },
         _addOpen:       { state: true },  // inline add row visible
+        _editingLang:   { state: true },  // lang code being renamed, or null
+        _editValue:     { state: true },  // current value of the rename input
+        _confirmAction: { state: true },  // pending { type, lang, newLang? } or null
     };
 
     constructor() {
@@ -35,6 +39,9 @@ export class VwTranslations extends UtBase {
         this.editorValue  = "";
         this._newLang     = "";
         this._addOpen     = false;
+        this._editingLang  = null;
+        this._editValue    = "";
+        this._confirmAction = null;
         this._onTeiLoaded = this._onTeiLoaded.bind(this);
     }
 
@@ -98,13 +105,13 @@ export class VwTranslations extends UtBase {
             font-size: 0.85rem;
             font-family: inherit;
             outline: none;
-            width: 110px;
+            width: 70px;
             transition: border-color 160ms ease, width 160ms ease;
         }
 
         .add-input:focus {
             border-color: var(--md-sys-color-primary, #6750a4);
-            width: 140px;
+            width: 90px;
         }
 
         /* ── Editor shell ────────────────────────────── */
@@ -133,6 +140,51 @@ export class VwTranslations extends UtBase {
             font-weight: 600;
             color: #4b5563;
             flex: 1;
+        }
+
+        /* ── Confirm overlay ────────────────────────────── */
+
+        .confirm-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(0,0,0,0.32);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .confirm-dialog {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            width: 360px;
+            max-width: calc(100vw - 32px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .confirm-headline {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #111827;
+            margin: 0;
+        }
+
+        .confirm-message {
+            font-size: 0.85rem;
+            color: #4b5563;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .confirm-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 4px;
         }
 
         /* ── Input shared style (reused in empty state) ─ */
@@ -225,10 +277,15 @@ export class VwTranslations extends UtBase {
     }
 
     _onSelectLang(lang) {
+        // Persist current editor content before switching
+        if (this.selectedLang && this.selectedLang !== ALL_KEY && this.editorValue) {
+            this.langMap = { ...this.langMap, [this.selectedLang]: this.editorValue };
+        }
+
         this.selectedLang = lang;
 
         if (lang === ALL_KEY) {
-            this.editorValue = formatXML(Data.generateTEI());
+            this.editorValue = formatXML(this._buildFullTEI());
             return;
         }
 
@@ -283,6 +340,87 @@ export class VwTranslations extends UtBase {
         return Array.from(new Set([...base, ...local]));
     }
 
+    _syncToData() {
+        const existingLangs = new Set(Data.getDocumentLanguages?.() || []);
+        for (const [lang, doc] of Object.entries(this.langMap || {})) {
+            if (existingLangs.has(lang)) {
+                Data.updateDocumentPerLanguage(lang, doc);
+            } else {
+                Data.addDocumentPerLanguage(lang, doc);
+            }
+        }
+    }
+
+    _buildFullTEI() {
+        if (this.selectedLang && this.selectedLang !== ALL_KEY && this.editorValue) {
+            this.langMap = { ...this.langMap, [this.selectedLang]: this.editorValue };
+        }
+        this._syncToData();
+        return Data.generateTEI();
+    }
+
+    // ─────────────────────────────
+    // RENAME / DELETE
+    // ─────────────────────────────
+
+    _startRename(lang) {
+        this._editingLang = lang;
+        this._editValue   = lang;
+    }
+
+    _confirmRename() {
+        const oldLang = this._editingLang;
+        const newLang = this._editValue.trim().toLowerCase();
+
+        this._editingLang = null;
+        this._editValue   = "";
+
+        if (!newLang || newLang === oldLang) return;
+
+        if (this._getAllLangs().includes(newLang)) {
+            this.alert("warning", `Language "${newLang.toUpperCase()}" already exists.`);
+            return;
+        }
+
+        this._confirmAction = { type: "rename", lang: oldLang, newLang };
+    }
+
+    _doRename(oldLang, newLang) {
+        Data.renameDocumentLanguage(oldLang, newLang);
+
+        if (this.langMap?.[oldLang] !== undefined) {
+            const doc = this.langMap[oldLang];
+            const updated = { ...this.langMap };
+            delete updated[oldLang];
+            updated[newLang] = doc;
+            this.langMap = updated;
+        }
+
+        if (this.selectedLang === oldLang) this.selectedLang = newLang;
+        this.langs = this._getAllLangs();
+    }
+
+    _deleteLang(lang) {
+        this._confirmAction = { type: "delete", lang };
+    }
+
+    _doDelete(lang) {
+        Data.deleteDocumentPerLanguage(lang);
+
+        if (this.langMap?.[lang] !== undefined) {
+            const updated = { ...this.langMap };
+            delete updated[lang];
+            this.langMap = updated;
+        }
+
+        if (this.selectedLang === lang) {
+            this.selectedLang = ALL_KEY;
+            this.editorValue  = formatXML(this._buildFullTEI());
+        }
+
+        this.langs = this._getAllLangs();
+    }
+
     _getLangLabel(lang) {
         if (lang === ALL_KEY) return "Full TEI document";
         const base = TXT.LANG?.[lang];
@@ -314,17 +452,44 @@ export class VwTranslations extends UtBase {
 
                     <div class="chip-divider"></div>
 
-                    <!-- Language chips -->
-                    ${langs.map(lang => html`
-                        <cp-chip
-                            label=${lang.toUpperCase()}
-                            value=${lang}
-                            variant="assist"
-                            @click=${() => this._onSelectLang(lang)}
+                    <!-- Language chips — click to select, dblclick to rename, X to delete -->
+                    ${repeat(langs, (lang) => lang, (lang) => this._editingLang === lang ? html`
+                        <div class="add-row">
+                            <input
+                                class="add-input"
+                                type="text"
+                                placeholder=${lang}
+                                maxlength="10"
+                                .value=${this._editValue}
+                                @input=${(e) => this._editValue = e.target.value}
+                                @keydown=${(e) => {
+                                    if (e.key === "Enter")  this._confirmRename();
+                                    if (e.key === "Escape") { this._editingLang = null; this._editValue = ""; }
+                                }}
+                            />
+                            <cp-button
+                                icon="check"
+                                tooltip="Confirm rename"
+                                variant="tonal"
+                                ?disabled=${!this._editValue.trim()}
+                                @click=${this._confirmRename}
+                            ></cp-button>
+                            <cp-button
+                                icon="close"
+                                tooltip="Cancel"
+                                @click=${() => { this._editingLang = null; this._editValue = ""; }}
+                            ></cp-button>
+                        </div>
+                    ` : html`
+                        <md-input-chip
+                            .label=${lang.toUpperCase()}
                             ?selected=${this.selectedLang === lang}
+                            @click=${() => this._onSelectLang(lang)}
+                            @dblclick=${(e) => { e.stopPropagation(); this._startRename(lang); }}
+                            @remove=${(e) => { e.preventDefault(); e.stopPropagation(); this._deleteLang(lang); }}
                         >
-                            <country-flag slot="leading-icon" .code=${lang}></country-flag>
-                        </cp-chip>
+                            <country-flag slot="icon" .code=${lang}></country-flag>
+                        </md-input-chip>
                     `)}
 
                 </div>
@@ -420,8 +585,40 @@ export class VwTranslations extends UtBase {
 
             </div>
 
+            ${this._renderConfirmDialog()}
+
         `;
     }
+    _renderConfirmDialog() {
+        const a = this._confirmAction;
+        if (!a) return "";
+
+        // Capture everything by value now — not read from this._confirmAction later
+        const isRename = a.type === "rename";
+        const headline = isRename ? "Rename translation?" : "Delete translation?";
+        const message  = isRename
+            ? `Are you sure you want to rename "${a.lang.toUpperCase()}" to "${a.newLang.toUpperCase()}"?`
+            : `Are you sure you want to delete the "${a.lang.toUpperCase()}" translation? This action cannot be undone.`;
+
+        const onCancel  = () => { this._confirmAction = null; };
+        const onConfirm = isRename
+            ? () => { this._confirmAction = null; this._doRename(a.lang, a.newLang); }
+            : () => { this._confirmAction = null; this._doDelete(a.lang); };
+
+        return html`
+            <div class="confirm-overlay" @click=${onCancel}>
+                <div class="confirm-dialog" @click=${(e) => e.stopPropagation()}>
+                    <p class="confirm-headline">${headline}</p>
+                    <p class="confirm-message">${message}</p>
+                    <div class="confirm-actions">
+                        <cp-button label="Cancel"  @click=${onCancel}></cp-button>
+                        <cp-button label="Confirm" variant=${isRename ? "tonal" : "filled"} @click=${onConfirm}></cp-button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
 }
 
 customElements.define('vw-translations', VwTranslations);

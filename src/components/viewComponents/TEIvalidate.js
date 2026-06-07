@@ -28,7 +28,8 @@ export class CpTEIvalidate extends UtBase {
 
         css`
             :host {
-                display: block;
+                display: inline-block;
+                position: relative;
             }
 
             .panel {
@@ -57,12 +58,22 @@ export class CpTEIvalidate extends UtBase {
             ───────────────────────────── */
 
             .error-panel {
-                margin-top: 10px;
+                position: absolute;
+                top: calc(100% + 6px);
+                right: 0;
+                z-index: 999;
+                width: 320px;
                 border: 1px solid rgba(220, 38, 38, 0.25);
                 border-radius: 10px;
                 background: #fff5f5;
                 overflow: hidden;
-                box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+                animation: panel-in 140ms cubic-bezier(0.22,1,0.36,1);
+            }
+
+            @keyframes panel-in {
+                from { opacity: 0; transform: translateY(-4px) scale(0.99); }
+                to   { opacity: 1; transform: translateY(0)    scale(1);    }
             }
 
             .error-header {
@@ -105,10 +116,6 @@ export class CpTEIvalidate extends UtBase {
                 border-left: 3px solid #dc2626;
                 border-radius: 6px;
                 line-height: 1.3;
-            }
-
-            .error-panel:hover {
-                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             }
 `
     ];
