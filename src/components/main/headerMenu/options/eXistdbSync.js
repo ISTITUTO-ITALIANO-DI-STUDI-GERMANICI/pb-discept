@@ -2,16 +2,16 @@
 // This loads XML data from the database giving credentials and a proxy eventually.
 
 import { html, css } from "lit";
-import { UtBase } from "../../../utilities/base.js";
-import { ExistDBClient } from "../../../utilities/connection/existdb-client.js";
-import { ALERT } from "../../../utilities/alert/alerts.js";
-import { CONFIG } from "../../../utilities/config.js";
+import { UtBase } from "../../../../utilities/base.js";
+import { ExistDBClient } from "../../../../utilities/connection/existdb-client.js";
+import { ALERT } from "../../../../utilities/alert/alerts.js";
+import { CONFIG } from "../../../../utilities/config.js";
 
-import "../../../utilities/connection/existdb.js";
+import "../../../../utilities/connection/existdb.js";
 
 import "@material/web/dialog/dialog.js";
 import "@material/web/textfield/outlined-text-field.js";
-import "../../../components/templates/button.js";
+import "../../../templates/button.js";
 
 const cfg = CONFIG.EXISTDB.DEFAULT;
 

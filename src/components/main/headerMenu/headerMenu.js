@@ -9,13 +9,20 @@
     - Tooltips for desktop actions and labeled buttons for mobile.
 */
 
-import { UtBase } from "../../utilities/base";
-import "../../components/templates/tooltip.js";
 import { html, css } from "lit";
-import { CONFIG } from "../../utilities/config.js";
-import { ALERT } from "../../utilities/alert/alerts.js";
-import { CpButton } from "../../components/templates/button.js";
-import { CpExistdbSync } from "./options/eXistdbSync.js";
+
+import { UtBase } from "../../../utilities/base.js";
+import { CONFIG } from "../../../utilities/config.js";
+import { ALERT } from "../../../utilities/alert/alerts.js";
+
+import "../../templates/button.js";
+import "../../templates/tooltip.js";
+
+import "./options/eXistdbSync.js";
+import "./options/upload.js";
+
+
+
 export class CpHeaderMenu extends UtBase {
 
     static properties = {

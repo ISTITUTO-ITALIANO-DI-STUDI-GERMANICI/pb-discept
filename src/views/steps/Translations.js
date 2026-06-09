@@ -570,11 +570,16 @@ export class VwTranslations extends UtBase {
             <div class="editor-wrapper">
 
                 <div class="editor-header">
-                    <span class="editor-title">${this._getLangLabel(this.selectedLang)} translation</span>
+
+                    <span class="editor-title">
+                        ${this._getLangLabel(this.selectedLang)} translation
+                    </span>
+
                     <cp-tei-validate
                         .xml=${this.editorValue}
                         ?disabled=${!this.editorValue}>
                     </cp-tei-validate>
+
                 </div>
 
                 <cp-monaco
@@ -589,6 +594,7 @@ export class VwTranslations extends UtBase {
 
         `;
     }
+
     _renderConfirmDialog() {
         const a = this._confirmAction;
         if (!a) return "";

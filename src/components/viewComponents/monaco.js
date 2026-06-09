@@ -118,9 +118,11 @@ export class CpMonaco extends UtBase {
 
             console.log("[CpMonaco] editor created", this._editor);
 
+
             this._editor.onDidChangeModelContent(() => {
                 const val = this._editor.getValue();
 
+                this._lastValue = val;              // Bug fixed
                 this.value = val;
 
                 this.dispatchEvent(new CustomEvent("change", {

@@ -2,7 +2,7 @@
 
 import { html, css } from 'lit';
 import { UtBase } from "../../utilities/base.js";
-import { CpHeaderMenu } from "./headerMenu.js";
+import { CpHeaderMenu } from "./headerMenu/headerMenu.js";
 
 export class CpHeader extends UtBase {
 
